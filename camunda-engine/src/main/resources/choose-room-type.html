@@ -1,0 +1,75 @@
+<form role="form" class="form-horizontal">
+
+    <script cam-script type="text/form-script">
+
+        var availableRoomTypesJson = '';
+        var variableManager = camForm.variableManager;
+        var finalOutputJson = '';
+
+        camForm.on('form-loaded', function() {
+          // tell the form SDK to fetch the variable named 'customer'
+          variableManager.fetchVariable('sact_get_available_room_outputs');
+        });
+
+        camForm.on('variables-fetched', function() {
+          // work with the variable (bind it to the current AngularJS $scope)
+          availableRoomTypesJson = variableManager.variableValue('sact_get_available_room_outputs');
+          $scope.availableRoomTypes = JSON.parse(availableRoomTypesJson);
+        });
+
+        camForm.on('submit', function(evt) {
+            camForm.variableManager.createVariable({
+                name: 'uact_choose_room_type_outputs',
+                type: 'string',
+                value: $scope.availableRoomTypes
+            });
+        });
+
+
+    </script>
+    <table class="control-group">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Select</th>
+        </tr>
+        </thead>
+        <tbody ng-repeat="roomType in availableRoomTypes">
+        <tr>
+            <td>{{ roomType.name }}</td>
+            <td>{{ roomType.description }}</td>
+            <td>£{{ roomType.price }}</td>
+            <td>
+                <input type="checkbox" cam-variable-type="Boolean" ng-model="roomType.selected"/>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+<style>
+    /* Base width for all cells */
+    table.control-group th,
+    table.control-group td {
+        width: 100px;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        border: 1px solid black; /* Border for cells */
+        padding: 5px; /* Adds some space between cell content and its borders */
+    }
+
+    /* Set a larger width for the Description cell */
+    table.control-group th:nth-child(2),
+    table.control-group td:nth-child(2) {
+        width: 300px;
+    }
+
+    /* Border for the entire table */
+    table.control-group {
+        border-collapse: collapse; /* Ensures borders don't double up */
+        border: 2px solid black; /* Border for the whole table */
+    }
+</style>

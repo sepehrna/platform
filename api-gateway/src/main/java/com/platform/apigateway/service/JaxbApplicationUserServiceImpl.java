@@ -16,15 +16,15 @@ import java.io.FileReader;
 import java.io.IOException;
 
 @Service
-public class JaxbInitiatorApplicationUserServiceImpl implements ApplicationUserService {
+public class JaxbApplicationUserServiceImpl implements ApplicationUserService {
 
-    private final Logger logger = LoggerFactory.getLogger(JaxbInitiatorApplicationUserServiceImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(JaxbApplicationUserServiceImpl.class);
     private ApplicationUsers applicationUsers;
     private final JaxbApplicationUsersMapper jaxbApplicationUsersMapper;
     private final Environment environment;
 
     @Autowired
-    public JaxbInitiatorApplicationUserServiceImpl(JaxbApplicationUsersMapper jaxbApplicationUsersMapper, Environment environment) {
+    public JaxbApplicationUserServiceImpl(JaxbApplicationUsersMapper jaxbApplicationUsersMapper, Environment environment) {
         this.jaxbApplicationUsersMapper = jaxbApplicationUsersMapper;
         this.environment = environment;
     }

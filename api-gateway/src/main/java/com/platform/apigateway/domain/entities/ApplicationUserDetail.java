@@ -13,4 +13,7 @@ public class ApplicationUserDetail extends Entity {
     private String password;
     private String role;
 
+    private String accessToken;
+    private String refreshToken;
+
 }
