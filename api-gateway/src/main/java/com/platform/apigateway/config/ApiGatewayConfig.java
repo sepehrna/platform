@@ -43,19 +43,37 @@ public class ApiGatewayConfig {
                     .host(microservice.getAddress())
                     .port(microservice.getPort());
 
-            URI microserviceUri = microserviceUriBuilder.build();
             OpenAPI openAPI = openApiDocService.getAllOpenApiDocs().get(microservice.getName());
-            for (Map.Entry<String, PathItem> entry : openAPI.getPaths().entrySet()) {
-                String path = entry.getKey();
-                PathItem pathItem = entry.getValue();
-                routeLocatorBuilder.route(r -> r.path(path)
-                        .filters(f -> {
-                            if (pathItem.getParameters() != null) {
-                                pathItem.getParameters().forEach(parameter -> f.addRequestParameter(parameter.getName(), parameter.getIn()));
-                            }
-                            return f;
-                        })
-                        .uri(microserviceUri));
+            if (openAPI != null) {
+                URI microserviceUri;
+                String expandedPath = "";
+                if (microservice.getOpenApiVersion() != null && microservice.getOpenApiVersion().equals("3")) {
+                    microserviceUri = microserviceUriBuilder.build();
+                } else {
+                    String uri = openAPI.getServers().get(0).getUrl();
+                    String uriFromSetting = microservice.getProtocol()
+                            + "://"
+                            + microservice.getAddress()
+                            + ":" + microservice.getPort();
+                    if (uri.equalsIgnoreCase(uriFromSetting)) {
+                        microserviceUri = URI.create(uri);
+                    } else {
+                        expandedPath = uri.substring(uriFromSetting.length());
+                        microserviceUri = microserviceUriBuilder.build();
+                    }
+                }
+                for (Map.Entry<String, PathItem> entry : openAPI.getPaths().entrySet()) {
+                    String path = expandedPath + entry.getKey();
+                    PathItem pathItem = entry.getValue();
+                    routeLocatorBuilder.route(r -> r.path(path)
+                            .filters(f -> {
+                                if (pathItem.getParameters() != null) {
+                                    pathItem.getParameters().forEach(parameter -> f.addRequestParameter(parameter.getName(), parameter.getIn()));
+                                }
+                                return f;
+                            })
+                            .uri(microserviceUri));
+                }
             }
         }
         return routeLocatorBuilder.build();

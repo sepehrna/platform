@@ -36,4 +36,10 @@ public class BusinessComplementaryController {
         return ResponseEntity
                 .ok(businessComplementaryService.getAvailableRoomTypes(checkInDate));
     }
+
+    @GetMapping(path = "/extract-room-type-id")
+    public ResponseEntity<String> extractRoomTypeId(@RequestBody String roomTypeJson) throws JsonProcessingException {
+        return ResponseEntity
+                .ok(businessComplementaryService.extractDefinedRoomTypeId(roomTypeJson));
+    }
 }

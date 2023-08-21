@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0pkc0ib" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.12.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.19.0">
+  <bpmn:collaboration id="prs_room_booking">
+    <bpmn:participant id="grpcustomers" name="Customer" processRef="cust_room_booking" />
+  </bpmn:collaboration>
+  <bpmn:process id="cust_room_booking" name="RoomBooking" isExecutable="true" camunda:historyTimeToLive="2">
+    <bpmn:startEvent id="str_booking" name="Book a room">
+      <bpmn:outgoing>Flow_063xzoi</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_063xzoi" sourceRef="str_booking" targetRef="uact_get_search_criteria" />
+    <bpmn:sequenceFlow id="Flow_03gns72" sourceRef="uact_get_search_criteria" targetRef="sact_get_available_room" />
+    <bpmn:sequenceFlow id="Flow_163gjop" sourceRef="sact_get_available_room" targetRef="uact_choose_room_type" />
+    <bpmn:userTask id="uact_get_search_criteria" name="Get Search Criteria">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="fld_check_in_date" label="Arrival" type="date">
+            <camunda:properties />
+            <camunda:validation>
+              <camunda:constraint name="required" />
+            </camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="fld_check_out_date" label="Departure" type="date">
+            <camunda:validation>
+              <camunda:constraint name="required" />
+            </camunda:validation>
+          </camunda:formField>
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_063xzoi</bpmn:incoming>
+      <bpmn:outgoing>Flow_03gns72</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="sact_get_available_room" name="Get Available Room" camunda:delegateExpression="#{getApiGatewayDelegate}">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="method">GET</camunda:inputParameter>
+          <camunda:inputParameter name="path">business-complementary/available-room-types</camunda:inputParameter>
+          <camunda:inputParameter name="parameters">
+            <camunda:map>
+              <camunda:entry key="checkInDate">${fld_check_in_date}</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_03gns72</bpmn:incoming>
+      <bpmn:outgoing>Flow_163gjop</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="uact_choose_room_type" name="Choose a Room Type" camunda:formKey="embedded:deployment:choose-room-type.html">
+      <bpmn:extensionElements />
+      <bpmn:incoming>Flow_163gjop</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ous29y</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="sact_book_a_room" name="Book a Room" camunda:delegateExpression="#{getApiGatewayDelegate}">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="method">POST</camunda:inputParameter>
+          <camunda:inputParameter name="path">booking</camunda:inputParameter>
+          <camunda:inputParameter name="body">
+            <camunda:map>
+              <camunda:entry key="customerId_Integer">10</camunda:entry>
+              <camunda:entry key="roomTypeId_Integer">${room_type_id}</camunda:entry>
+              <camunda:entry key="checkInDate">${fld_check_in_date}</camunda:entry>
+              <camunda:entry key="checkOutDate">${fld_check_out_date}</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0ous29y</bpmn:incoming>
+      <bpmn:outgoing>Flow_0adqya5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0ous29y" sourceRef="uact_choose_room_type" targetRef="sact_book_a_room" />
+    <bpmn:sequenceFlow id="Flow_0adqya5" sourceRef="sact_book_a_room" targetRef="Activity_1lw5q3y" />
+    <bpmn:userTask id="Activity_15wzplr" name="Second Check">
+      <bpmn:incoming>Flow_1fz85sa</bpmn:incoming>
+      <bpmn:outgoing>Flow_1cemqw7</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="uact_pay" name="Pay" camunda:formKey="${sact_get_checkout_url_outputs}">
+      <bpmn:incoming>Flow_1cemqw7</bpmn:incoming>
+      <bpmn:outgoing>Flow_02ogirj</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1cemqw7" sourceRef="Activity_15wzplr" targetRef="uact_pay" />
+    <bpmn:sequenceFlow id="Flow_02ogirj" sourceRef="uact_pay" targetRef="Event_13c0m2n" />
+    <bpmn:sequenceFlow id="Flow_065bvpz" sourceRef="Event_13c0m2n" targetRef="sact_check_payment_status" />
+    <bpmn:sequenceFlow id="Flow_0gtaajf" name="COMPLETED" sourceRef="Gateway_0fql8o7" targetRef="sact_finalize_booking">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${sact_check_payment_status_output == "COMPLETED"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:intermediateCatchEvent id="Event_13c0m2n" name="Payment Deadline Duration">
+      <bpmn:incoming>Flow_02ogirj</bpmn:incoming>
+      <bpmn:outgoing>Flow_065bvpz</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1p4aaau">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT59S</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_0cq7nam" sourceRef="sact_finalize_booking" targetRef="end_booking" />
+    <bpmn:endEvent id="end_booking" name="End booking">
+      <bpmn:incoming>Flow_0cq7nam</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="sact_check_payment_status" name="Check Payment Status" camunda:delegateExpression="#{getApiGatewayDelegate}">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="path">payment/status</camunda:inputParameter>
+          <camunda:inputParameter name="method">GET</camunda:inputParameter>
+          <camunda:inputParameter name="path_variable">${sact_get_payment_order_outputs}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_065bvpz</bpmn:incoming>
+      <bpmn:outgoing>Flow_0pz6skc</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_0fql8o7">
+      <bpmn:extensionElements />
+      <bpmn:incoming>Flow_1u25p6n</bpmn:incoming>
+      <bpmn:outgoing>Flow_0gtaajf</bpmn:outgoing>
+      <bpmn:outgoing>Flow_19ufzkh</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_19ufzkh" name="PENDING" sourceRef="Gateway_0fql8o7" targetRef="sact_cancel_pending_payment">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${sact_check_payment_status_output == "PENDING"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:userTask id="Activity_12jxkkw" name="Third Check">
+      <bpmn:incoming>Flow_0pz6skc</bpmn:incoming>
+      <bpmn:outgoing>Flow_1u25p6n</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0pz6skc" sourceRef="sact_check_payment_status" targetRef="Activity_12jxkkw" />
+    <bpmn:sequenceFlow id="Flow_1u25p6n" sourceRef="Activity_12jxkkw" targetRef="Gateway_0fql8o7" />
+    <bpmn:serviceTask id="sact_finalize_booking" name="Finalize the Booking" camunda:delegateExpression="#{getApiGatewayDelegate}">
+      <bpmn:incoming>Flow_0gtaajf</bpmn:incoming>
+      <bpmn:outgoing>Flow_0cq7nam</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="sact_cancel_pending_payment" name="Cancel Pending Payment" camunda:delegateExpression="#{getApiGatewayDelegate}">
+      <bpmn:incoming>Flow_19ufzkh</bpmn:incoming>
+      <bpmn:outgoing>Flow_1oenev9</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Activity_1lw5q3y" name="First Check">
+      <bpmn:incoming>Flow_0adqya5</bpmn:incoming>
+      <bpmn:outgoing>Flow_0dx7t1r</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="sact_get_payment_order" name="Get Payment Order" camunda:delegateExpression="#{getApiGatewayDelegate}">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="method">POST</camunda:inputParameter>
+          <camunda:inputParameter name="path">payment/payment-order</camunda:inputParameter>
+          <camunda:inputParameter name="body">
+            <camunda:map>
+              <camunda:entry key="customerId">10</camunda:entry>
+              <camunda:entry key="amount">${price}</camunda:entry>
+              <camunda:entry key="checkInDate">${fld_check_in_date}</camunda:entry>
+              <camunda:entry key="checkOutDate">${fld_check_out_date}</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0dx7t1r</bpmn:incoming>
+      <bpmn:outgoing>Flow_1hbscqy</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="sact_get_checkout_url" name="Get Checkout URL" camunda:delegateExpression="#{getApiGatewayDelegate}">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="method">GET</camunda:inputParameter>
+          <camunda:inputParameter name="path">payment/checkout-url</camunda:inputParameter>
+          <camunda:inputParameter name="path_variable">${sact_get_payment_order_outputs}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1hbscqy</bpmn:incoming>
+      <bpmn:outgoing>Flow_1fz85sa</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1hbscqy" sourceRef="sact_get_payment_order" targetRef="sact_get_checkout_url" />
+    <bpmn:sequenceFlow id="Flow_1fz85sa" sourceRef="sact_get_checkout_url" targetRef="Activity_15wzplr" />
+    <bpmn:sequenceFlow id="Flow_0dx7t1r" sourceRef="Activity_1lw5q3y" targetRef="sact_get_payment_order" />
+    <bpmn:endEvent id="Event_02sz843">
+      <bpmn:incoming>Flow_1oenev9</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1oenev9" sourceRef="sact_cancel_pending_payment" targetRef="Event_02sz843" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="prs_room_booking">
+      <bpmndi:BPMNShape id="Participant_0ed7c2j_di" bpmnElement="grpcustomers" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1430" height="690" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="str_booking">
+        <dc:Bounds x="210" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="199" y="225" width="63" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_10k7vyw_di" bpmnElement="uact_get_search_criteria">
+        <dc:Bounds x="340" y="160" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1kj6llv_di" bpmnElement="sact_get_available_room">
+        <dc:Bounds x="520" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0pwomzh_di" bpmnElement="uact_choose_room_type">
+        <dc:Bounds x="690" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_05860mw_di" bpmnElement="sact_book_a_room">
+        <dc:Bounds x="870" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1poe5z5_di" bpmnElement="Activity_15wzplr">
+        <dc:Bounds x="1420" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0v1xupc_di" bpmnElement="uact_pay">
+        <dc:Bounds x="1420" y="350" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_13c0m2n_di" bpmnElement="Event_13c0m2n">
+        <dc:Bounds x="1252" y="372" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1228" y="415" width="90" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_01e7xpc_di" bpmnElement="end_booking">
+        <dc:Bounds x="512" y="372" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="499" y="415" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_15vmnun_di" bpmnElement="sact_check_payment_status">
+        <dc:Bounds x="1060" y="350" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0fql8o7_di" bpmnElement="Gateway_0fql8o7" isMarkerVisible="true">
+        <dc:Bounds x="895" y="365" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_02p5wji_di" bpmnElement="Activity_12jxkkw">
+        <dc:Bounds x="1060" y="530" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1278ewy_di" bpmnElement="sact_finalize_booking">
+        <dc:Bounds x="670" y="350" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_12xan6c_di" bpmnElement="sact_cancel_pending_payment">
+        <dc:Bounds x="870" y="530" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_04g53mb_di" bpmnElement="Activity_1lw5q3y">
+        <dc:Bounds x="870" y="270" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1v38su0_di" bpmnElement="sact_get_payment_order">
+        <dc:Bounds x="1070" y="160" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1q1hb2u_di" bpmnElement="sact_get_checkout_url">
+        <dc:Bounds x="1250" y="160" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_02sz843_di" bpmnElement="Event_02sz843">
+        <dc:Bounds x="502" y="552" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_063xzoi_di" bpmnElement="Flow_063xzoi">
+        <di:waypoint x="246" y="200" />
+        <di:waypoint x="340" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03gns72_di" bpmnElement="Flow_03gns72">
+        <di:waypoint x="440" y="200" />
+        <di:waypoint x="520" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_163gjop_di" bpmnElement="Flow_163gjop">
+        <di:waypoint x="620" y="200" />
+        <di:waypoint x="690" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ous29y_di" bpmnElement="Flow_0ous29y">
+        <di:waypoint x="790" y="200" />
+        <di:waypoint x="870" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0adqya5_di" bpmnElement="Flow_0adqya5">
+        <di:waypoint x="920" y="240" />
+        <di:waypoint x="920" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1cemqw7_di" bpmnElement="Flow_1cemqw7">
+        <di:waypoint x="1470" y="240" />
+        <di:waypoint x="1470" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02ogirj_di" bpmnElement="Flow_02ogirj">
+        <di:waypoint x="1420" y="390" />
+        <di:waypoint x="1288" y="390" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_065bvpz_di" bpmnElement="Flow_065bvpz">
+        <di:waypoint x="1252" y="390" />
+        <di:waypoint x="1160" y="390" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0gtaajf_di" bpmnElement="Flow_0gtaajf">
+        <di:waypoint x="895" y="390" />
+        <di:waypoint x="770" y="390" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="798" y="372" width="69" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0cq7nam_di" bpmnElement="Flow_0cq7nam">
+        <di:waypoint x="670" y="390" />
+        <di:waypoint x="548" y="390" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19ufzkh_di" bpmnElement="Flow_19ufzkh">
+        <di:waypoint x="920" y="415" />
+        <di:waypoint x="920" y="530" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="935" y="469" width="51" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0pz6skc_di" bpmnElement="Flow_0pz6skc">
+        <di:waypoint x="1110" y="430" />
+        <di:waypoint x="1110" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1u25p6n_di" bpmnElement="Flow_1u25p6n">
+        <di:waypoint x="1082" y="530" />
+        <di:waypoint x="1000" y="425" />
+        <di:waypoint x="937" y="398" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1hbscqy_di" bpmnElement="Flow_1hbscqy">
+        <di:waypoint x="1170" y="200" />
+        <di:waypoint x="1250" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1fz85sa_di" bpmnElement="Flow_1fz85sa">
+        <di:waypoint x="1350" y="200" />
+        <di:waypoint x="1420" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0dx7t1r_di" bpmnElement="Flow_0dx7t1r">
+        <di:waypoint x="970" y="310" />
+        <di:waypoint x="1020" y="310" />
+        <di:waypoint x="1020" y="200" />
+        <di:waypoint x="1070" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1oenev9_di" bpmnElement="Flow_1oenev9">
+        <di:waypoint x="870" y="570" />
+        <di:waypoint x="538" y="570" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,7 @@
+com\platform\workflow\configuration\SimpleCorsFilter.class
+com\platform\workflow\configuration\CorsConfig.class
+com\platform\workflow\configuration\WebSecurityConfig.class
+com\platform\workflow\Application.class
+com\platform\workflow\service\ApiGatewayDelegate.class
+com\platform\workflow\service\ApiGatewayDelegate$1.class
+com\platform\workflow\configuration\DelegatesConfiguration.class

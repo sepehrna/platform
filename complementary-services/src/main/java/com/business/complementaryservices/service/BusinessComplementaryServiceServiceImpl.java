@@ -7,7 +7,10 @@ import com.business.complementaryservices.dto.RoomTypeSelectorDto;
 import com.business.complementaryservices.facade.BookingServicesFacade;
 import com.business.complementaryservices.facade.RoomServicesFacade;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.configurationprocessor.json.JSONArray;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -21,10 +24,13 @@ public class BusinessComplementaryServiceServiceImpl implements BusinessCompleme
     private final BookingServicesFacade bookingServicesFacade;
     private final RoomServicesFacade roomServicesFacade;
 
+    private final ObjectMapper objectMapper;
+
     @Autowired
-    public BusinessComplementaryServiceServiceImpl(BookingServicesFacade bookingServicesFacade, RoomServicesFacade roomServicesFacade) {
+    public BusinessComplementaryServiceServiceImpl(BookingServicesFacade bookingServicesFacade, RoomServicesFacade roomServicesFacade, ObjectMapper objectMapper) {
         this.bookingServicesFacade = bookingServicesFacade;
         this.roomServicesFacade = roomServicesFacade;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -36,11 +42,12 @@ public class BusinessComplementaryServiceServiceImpl implements BusinessCompleme
         availableRoomTypes = availableRoomTypes.stream()
                 .filter(roomTypeDto ->
                         roomTypeDto.getRooms() != null
-                        && !roomTypeDto.getRooms().isEmpty()
-                        && fetchedBookings
-                        .stream()
-                        .filter(bookingDto -> bookingDto.getRoomTypeId().equals(roomTypeDto.getRoom_type_id()))
-                        .count() < (long) roomTypeDto.getRooms().size()
+                                && !roomTypeDto.getRooms().isEmpty()
+                                && fetchedBookings
+                                .stream()
+                                .filter(bookingDto -> bookingDto.getRoomTypeId().equals(roomTypeDto.getRoom_type_id())
+                                        && bookingDto.getStatus().equals("Confirmed"))
+                                .count() < (long) roomTypeDto.getRooms().size()
                 )
                 .collect(Collectors.toList());
 
@@ -55,5 +62,15 @@ public class BusinessComplementaryServiceServiceImpl implements BusinessCompleme
         });
 
         return availableRoomTypesSelectors;
+    }
+
+    @Override
+    public String extractDefinedRoomTypeId(String definedRoomTypeJson) throws JsonProcessingException {
+        RoomTypeDto roomTypeDto = objectMapper.readValue(definedRoomTypeJson, RoomTypeDto.class);
+        RoomTypeDto found = roomServicesFacade.getAllRoomTypes()
+                .stream()
+                .filter(roomTypeDtoInner -> roomTypeDto.getName().equals(roomTypeDtoInner.getName()))
+                .findFirst().get();
+        return found.getRoom_type_id().toString();
     }
 }

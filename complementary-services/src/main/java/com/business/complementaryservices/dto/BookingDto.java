@@ -1,13 +1,18 @@
 package com.business.complementaryservices.dto;
 
-import java.sql.Date;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+
 import java.time.LocalDate;
 
 public class BookingDto {
     private Integer bookingId;
+    private Integer customerId;
     private Integer roomTypeId;
+    @JsonDeserialize(using = LocalDateDeserializer.class)
     private LocalDate checkInDate;
-    private LocalDate getCheckOutDate;
+    @JsonDeserialize(using = LocalDateDeserializer.class)
+    private LocalDate checkOutDate;
     private String status;
 
     public Integer getBookingId() {
@@ -16,6 +21,14 @@ public class BookingDto {
 
     public void setBookingId(Integer bookingId) {
         this.bookingId = bookingId;
+    }
+
+    public Integer getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Integer customerId) {
+        this.customerId = customerId;
     }
 
     public Integer getRoomTypeId() {
@@ -34,12 +47,12 @@ public class BookingDto {
         this.checkInDate = checkInDate;
     }
 
-    public LocalDate getGetCheckOutDate() {
-        return getCheckOutDate;
+    public LocalDate getCheckOutDate() {
+        return checkOutDate;
     }
 
-    public void setGetCheckOutDate(LocalDate getCheckOutDate) {
-        this.getCheckOutDate = getCheckOutDate;
+    public void setCheckOutDate(LocalDate checkOutDate) {
+        this.checkOutDate = checkOutDate;
     }
 
     public String getStatus() {
