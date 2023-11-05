@@ -18,7 +18,13 @@
         });
 
         camForm.on('submit', function(evt) {
-        var roomType = $scope.availableRoomTypes[0];
+        var roomTypes = $scope.availableRoomTypes;
+        var roomType;
+        for (let i = 0; i < roomTypes.length; i++) {
+            if(roomTypes[i].selected){
+                roomType = roomTypes[i];
+            }
+        }
         var roomTypeId = roomType.room_type_id;
         var roomTypePrice = roomType.price;
             camForm.variableManager.createVariable({

@@ -1,13 +1,18 @@
 package com.business.complementaryservices.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import java.util.List;
 
 public class RoomTypeDto {
-
+    @JsonProperty(required = false)
     private Integer room_type_id;
     private String name;
     private String description;
-    private float price;
+    @JsonDeserialize(using = CustomPriceDeserializer.class)
+    private Float price;
+    @JsonProperty(required = false)
     private List<RoomDto> rooms;
 
     public Integer getRoom_type_id() {

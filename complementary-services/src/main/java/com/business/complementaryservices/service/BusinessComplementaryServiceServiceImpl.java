@@ -9,8 +9,7 @@ import com.business.complementaryservices.facade.RoomServicesFacade;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.configurationprocessor.json.JSONArray;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
+import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -46,7 +45,7 @@ public class BusinessComplementaryServiceServiceImpl implements BusinessCompleme
                                 && fetchedBookings
                                 .stream()
                                 .filter(bookingDto -> bookingDto.getRoomTypeId().equals(roomTypeDto.getRoom_type_id())
-                                        && bookingDto.getStatus().equals("Confirmed"))
+                                        && !bookingDto.getStatus().equals("Cancelled"))
                                 .count() < (long) roomTypeDto.getRooms().size()
                 )
                 .collect(Collectors.toList());
@@ -65,12 +64,15 @@ public class BusinessComplementaryServiceServiceImpl implements BusinessCompleme
     }
 
     @Override
-    public String extractDefinedRoomTypeId(String definedRoomTypeJson) throws JsonProcessingException {
-        RoomTypeDto roomTypeDto = objectMapper.readValue(definedRoomTypeJson, RoomTypeDto.class);
-        RoomTypeDto found = roomServicesFacade.getAllRoomTypes()
-                .stream()
-                .filter(roomTypeDtoInner -> roomTypeDto.getName().equals(roomTypeDtoInner.getName()))
-                .findFirst().get();
-        return found.getRoom_type_id().toString();
+    public String defineRoomTypeCustomized(RoomTypeDto roomTypeDto) throws JsonProcessingException, JSONException {
+        RoomTypeDto definedRoomTypeDto = roomServicesFacade.defineRoomType(roomTypeDto);
+        return definedRoomTypeDto.getRoom_type_id().toString();
+    }
+
+    @Override
+    public String bookRoomTypeCustomized(BookingDto bookingDto) throws JsonProcessingException, JSONException {
+        BookingDto savedBookingDto = bookingServicesFacade.bookRoomType(bookingDto);
+        return savedBookingDto.getBookingId().toString();
     }
 }
+

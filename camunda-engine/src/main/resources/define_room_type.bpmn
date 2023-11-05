@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1br7uob" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.12.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.19.0">
+  <bpmn:collaboration id="prs_define_room_type">
+    <bpmn:participant id="grpstaffs" name="Staff" processRef="stf_room_type" />
+  </bpmn:collaboration>
+  <bpmn:process id="stf_room_type" name="Define room type" isExecutable="true" camunda:historyTimeToLive="2">
+    <bpmn:sequenceFlow id="Flow_0qg0oh9" sourceRef="str_define_type" targetRef="uact_get_room_type_chrs" />
+    <bpmn:sequenceFlow id="Flow_044jo4n" sourceRef="uact_get_room_type_chrs" targetRef="sact_define_room_type" />
+    <bpmn:startEvent id="str_define_type" name="Define a room type">
+      <bpmn:outgoing>Flow_0qg0oh9</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="sact_define_room_type" name="Define Room Type" camunda:delegateExpression="#{getApiGatewayDelegate}">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="method">POST</camunda:inputParameter>
+          <camunda:inputParameter name="path">business-complementary/define-room-type-customized</camunda:inputParameter>
+          <camunda:inputParameter name="body">
+            <camunda:map>
+              <camunda:entry key="name">${fld_type_name}</camunda:entry>
+              <camunda:entry key="description">${fld_description}</camunda:entry>
+              <camunda:entry key="price">${fld_price}</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_044jo4n</bpmn:incoming>
+      <bpmn:outgoing>Flow_1st7n3m</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="uact_get_room_type_chrs" name="Get Room Type Characteristics">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="fld_type_name" label="Name" type="string">
+            <camunda:properties />
+            <camunda:validation />
+          </camunda:formField>
+          <camunda:formField id="fld_description" label="Description" type="string">
+            <camunda:validation />
+          </camunda:formField>
+          <camunda:formField id="fld_price" label="Price" type="string" defaultValue="0.00">
+            <camunda:validation />
+          </camunda:formField>
+          <camunda:formField id="fld_room_count" label="Number of room with this type" type="long" defaultValue="1" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0qg0oh9</bpmn:incoming>
+      <bpmn:outgoing>Flow_044jo4n</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:subProcess id="Activity_1qzej3r">
+      <bpmn:incoming>Flow_1st7n3m</bpmn:incoming>
+      <bpmn:outgoing>Flow_1lsuu20</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics isSequential="true">
+        <bpmn:loopCardinality xsi:type="bpmn:tFormalExpression">${sact_define_room_type_outputs}</bpmn:loopCardinality>
+      </bpmn:multiInstanceLoopCharacteristics>
+      <bpmn:startEvent id="str_sb_add_room">
+        <bpmn:outgoing>Flow_0t78xxv</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:serviceTask id="sact_add_room" name="Add Room" camunda:delegateExpression="#{getApiGatewayDelegate}">
+        <bpmn:extensionElements>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="path">room_types/</camunda:inputParameter>
+            <camunda:inputParameter name="path_variable">${sact_define_room_type_outputs}</camunda:inputParameter>
+            <camunda:inputParameter name="post_variable_path">/rooms/</camunda:inputParameter>
+          </camunda:inputOutput>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_0t78xxv</bpmn:incoming>
+        <bpmn:outgoing>Flow_0wwh4f7</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:endEvent id="end_sub_add">
+        <bpmn:incoming>Flow_0wwh4f7</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_0t78xxv" sourceRef="str_sb_add_room" targetRef="sact_add_room" />
+      <bpmn:sequenceFlow id="Flow_0wwh4f7" sourceRef="sact_add_room" targetRef="end_sub_add" />
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_1st7n3m" sourceRef="sact_define_room_type" targetRef="Activity_1qzej3r" />
+    <bpmn:sequenceFlow id="Flow_1lsuu20" sourceRef="Activity_1qzej3r" targetRef="end_define_type" />
+    <bpmn:endEvent id="end_define_type" name="End defining type">
+      <bpmn:incoming>Flow_1lsuu20</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmn:error id="Error_0fg0kwv" name="RoomTypeDefinitionFault" errorCode="RTDF" camunda:errorMessage="Room type definition service not available" />
+  <bpmn:error id="Error_04mt3vk" name="TypeIdExtractionFault" errorCode="TIEF" camunda:errorMessage="Extract type id service not available" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="prs_define_room_type">
+      <bpmndi:BPMNShape id="Participant_0inbo66_di" bpmnElement="grpstaffs" isHorizontal="true">
+        <dc:Bounds x="129" y="79" width="841" height="561" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="str_define_type">
+        <dc:Bounds x="179" y="122" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="163" y="165" width="70" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0w9fcum_di" bpmnElement="sact_define_room_type">
+        <dc:Bounds x="460" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1i0j7vy_di" bpmnElement="uact_get_room_type_chrs">
+        <dc:Bounds x="280" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0z6khaa_di" bpmnElement="end_define_type">
+        <dc:Bounds x="912" y="357" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="889" y="400" width="86" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1qzej3r_di" bpmnElement="Activity_1qzej3r" isExpanded="true">
+        <dc:Bounds x="290" y="260" width="525" height="230" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_03a8be3_di" bpmnElement="end_sub_add">
+        <dc:Bounds x="687" y="352" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="696" y="395" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_14wbhad_di" bpmnElement="str_sb_add_room">
+        <dc:Bounds x="330" y="352" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="325" y="395" width="48" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0p04bqx_di" bpmnElement="sact_add_room">
+        <dc:Bounds x="480" y="330" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0wwh4f7_di" bpmnElement="Flow_0wwh4f7">
+        <di:waypoint x="580" y="370" />
+        <di:waypoint x="687" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0t78xxv_di" bpmnElement="Flow_0t78xxv">
+        <di:waypoint x="366" y="370" />
+        <di:waypoint x="480" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0qg0oh9_di" bpmnElement="Flow_0qg0oh9">
+        <di:waypoint x="215" y="140" />
+        <di:waypoint x="280" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_044jo4n_di" bpmnElement="Flow_044jo4n">
+        <di:waypoint x="380" y="140" />
+        <di:waypoint x="460" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1st7n3m_di" bpmnElement="Flow_1st7n3m">
+        <di:waypoint x="510" y="180" />
+        <di:waypoint x="510" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1lsuu20_di" bpmnElement="Flow_1lsuu20">
+        <di:waypoint x="815" y="375" />
+        <di:waypoint x="912" y="375" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

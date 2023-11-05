@@ -1,11 +1,13 @@
 package com.business.complementaryservices.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 
 import java.time.LocalDate;
 
 public class BookingDto {
+    @JsonProperty(required = false)
     private Integer bookingId;
     private Integer customerId;
     private Integer roomTypeId;
@@ -13,6 +15,7 @@ public class BookingDto {
     private LocalDate checkInDate;
     @JsonDeserialize(using = LocalDateDeserializer.class)
     private LocalDate checkOutDate;
+    @JsonProperty(required = false)
     private String status;
 
     public Integer getBookingId() {
